@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: virtual-store
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tienda_virtual
+    username: kikecorpus
+    password:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+
+# ---------------------------------------------------------------
+# JWT
+# ---------------------------------------------------------------
+jwt:
+  # ✅ Mínimo 32 caracteres para HS256. En producción usa una variable
+  # de entorno: jwt.secret=${JWT_SECRET}
+  secret: "cambia-esto-por-un-secreto-seguro-32chars!"
+
+  # Expiración del token en milisegundos
+  # 86400000  =  24 horas
+  # 3600000   =   1 hora
+  expiration: 86400000
+
+# ---------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------
+cors:
+  # En producción reemplaza con la URL real de tu frontend:
+  # allowed-origin=${FRONTEND_URL}
+  allowed-origin: "http://localhost:5173"

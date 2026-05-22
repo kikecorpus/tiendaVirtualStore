@@ -26,11 +26,29 @@ server:
   port: 8080
 
 springdoc:
+   # ── Documentación JSON ──────────────────────────────────────
   api-docs:
-    path: /api-docs
+    enabled: true
+    path: /api-docs              # → http://localhost:8080/api-docs
+
+  # ── Swagger UI ──────────────────────────────────────────────
   swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
+    enabled: true
+    path: /swagger-ui.html       # → http://localhost:8080/swagger-ui.html
+    tags-sorter: alpha            # ordena los grupos alfabéticamente
+    operations-sorter: alpha      # ordena los endpoints alfabéticamente
+    display-request-duration: true # muestra el tiempo de cada request
+    try-it-out-enabled: true      # habilita "Try it out" por defecto
+    filter: true                  # habilita el buscador de endpoints
+
+  # ── Paginación ──────────────────────────────────────────────
+  pageable-as-query-param: true   # muestra page, size, sort como campos individuales
+
+  # ── Modelos ─────────────────────────────────────────────────
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  show-actuator: false            # oculta endpoints de actuator si los tienes
+  model-and-view-allowed: false
 
 # ---------------------------------------------------------------
 # JWT
@@ -52,3 +70,9 @@ cors:
   # En producción reemplaza con la URL real de tu frontend:
   # allowed-origin=${FRONTEND_URL}
   allowed-origin: "http://localhost:5173"
+
+mercadopago:
+  access-token: APP_USR-8984698397446586-052117-c9ed8623c760bdca521756e6dd38cde0-2132120273
+  success-url: http://localhost:8080/api/payments/success
+  failure-url: http://localhost:8080/api/payments/failure
+  pending-url: http://localhost:8080/api/payments/pending

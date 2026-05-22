@@ -3,13 +3,18 @@
 -- Sprint 5 | Usuario admin inicial + categorías de ejemplo
 -- ============================================================
 
--- ⚠️  IMPORTANTE: Este password es solo para desarrollo local.
---     En producción usar un hash BCrypt real generado por la app.
---     Hash de ejemplo para: Admin123!
+-- Contraseña: Admin123!
+-- Hash generado con BCrypt rounds=12. Para regenerarlo:
+--   En Java:  new BCryptPasswordEncoder().encode("Admin123!")
+--   En Python: bcrypt.hashpw(b"Admin123!", bcrypt.gensalt(rounds=12))
+--
+-- ⚠️  EN PRODUCCIÓN: reemplaza este hash por uno generado localmente
+--     o mejor aún, usa una variable de entorno y configúralo
+--     desde la app al arrancar, no desde SQL.
 INSERT INTO users (email, password_hash, first_name, last_name, enabled)
 VALUES (
     'admin@tienda.com',
-    '$2a$12$eImiTXuWVxfM37uY4JANjQ==.example.hash.change.in.production',
+    '$2b$12$bvk7OgpsLQhpfZI8MRx.ve1M1rZJF2ecYvI0t3d5hp13QqQ6wlg5y',
     'Admin',
     'Tienda',
     TRUE

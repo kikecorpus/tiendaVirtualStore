@@ -11,7 +11,7 @@ CREATE TABLE payments (
     status            VARCHAR(50)    NOT NULL DEFAULT 'PENDING',
     amount            DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
     paid_at           TIMESTAMP,
-
+    created_at        TIMESTAMP      NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_payment_status CHECK (
         status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')
     )

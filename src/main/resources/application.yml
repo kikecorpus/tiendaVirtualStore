@@ -73,6 +73,7 @@ cors:
 
 mercadopago:
   access-token: APP_USR-8984698397446586-052117-c9ed8623c760bdca521756e6dd38cde0-2132120273
-  success-url: http://localhost:8080/api/payments/success
-  failure-url: http://localhost:8080/api/payments/failure
-  pending-url: http://localhost:8080/api/payments/pending
+  success-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/success
+  failure-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/failure
+  pending-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/pending
+  webhook-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/webhook

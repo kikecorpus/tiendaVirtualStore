@@ -48,6 +48,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${mercadopago.pending-url}")
     private String pendingUrl;
 
+    @Value("${mercadopago.webhook-url}")
+    private String webhookUrl;
+
     @Override
     @Transactional
     public PaymentResponse createPreference(Long orderId, Long userId) {
@@ -98,6 +101,7 @@ public class PaymentServiceImpl implements PaymentService {
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .items(items)
                     .backUrls(backUrls)
+                    .notificationUrl(webhookUrl)
                     .autoReturn("approved")
                     .externalReference(String.valueOf(order.getId()))
                     .build();

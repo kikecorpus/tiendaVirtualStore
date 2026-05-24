@@ -1,6 +1,7 @@
 package com.tienda.virtualstore.controller;
 
 import com.tienda.virtualstore.dto.request.LoginRequest;
+import com.tienda.virtualstore.dto.request.RefreshTokenRequest;
 import com.tienda.virtualstore.dto.request.RegisterRequest;
 import com.tienda.virtualstore.dto.response.AuthResponse;
 import com.tienda.virtualstore.service.AuthService;
@@ -61,6 +62,23 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(
+            summary     = "Renovar JWT",
+            description = "Genera un nuevo access token usando el refresh token."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token renovado",
+                    content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Refresh token inválido o expirado",
+                    content = @Content)
+    })
+    public ResponseEntity<AuthResponse> refresh(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        return ResponseEntity.ok(authService.refresh(request));
     }
 
 }

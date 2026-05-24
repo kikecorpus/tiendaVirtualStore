@@ -22,6 +22,9 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration;
+
     // ✅ MEJORA 1: Validar el secreto al arrancar la aplicación.
     // Si el secreto es menor a 32 bytes, HS256 lanza una excepción en runtime.
     // Mejor fallar rápido (fail-fast) al iniciar que en la primera petición.
@@ -87,5 +90,13 @@ public class JwtService {
         return Keys.hmacShaKeyFor(
                 jwtSecret.getBytes(StandardCharsets.UTF_8)
         );
+    }
+
+    public String generateRefreshToken() {
+        return java.util.UUID.randomUUID().toString();
+    }
+
+    public Long getRefreshExpiration() {
+        return refreshExpiration;
     }
 }

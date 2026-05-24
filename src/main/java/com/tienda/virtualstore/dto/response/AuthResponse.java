@@ -22,10 +22,15 @@ public class AuthResponse {
     @Schema(description = "Información básica del usuario autenticado")
     private UserResponse user;
 
-    public AuthResponse(String token, Long expiresIn, UserResponse user) {
+    @Schema(description = "Refresh token para renovar el JWT",
+            example = "eyJhbGci...")
+    private String refreshToken;
+
+    public AuthResponse(String token, Long expiresIn, String refreshToken, UserResponse user) {
         this.token     = token;
         this.tokenType = "Bearer";
         this.expiresIn = expiresIn;
         this.user      = user;
+        this.refreshToken = refreshToken;
     }
 }

@@ -1,12 +1,15 @@
 package com.tienda.virtualstore.service.impl;
 
 import com.tienda.virtualstore.dto.request.LoginRequest;
+import com.tienda.virtualstore.dto.request.RefreshTokenRequest;
 import com.tienda.virtualstore.dto.request.RegisterRequest;
 import com.tienda.virtualstore.dto.response.AuthResponse;
 import com.tienda.virtualstore.dto.response.UserResponse;
 import com.tienda.virtualstore.mapper.UserMapper;
+import com.tienda.virtualstore.model.RefreshToken;
 import com.tienda.virtualstore.model.Role;
 import com.tienda.virtualstore.model.User;
+import com.tienda.virtualstore.repository.RefreshTokenRepository;
 import com.tienda.virtualstore.repository.RoleRepository;
 import com.tienda.virtualstore.repository.UserRepository;
 import com.tienda.virtualstore.security.JwtService;
@@ -15,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -26,6 +31,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper      userMapper;
     private final JwtService jwtService;      // ← inyectas JwtService
+    private final RefreshTokenRepository refreshTokenRepository;
+
 
     @Override
     @Transactional
@@ -48,9 +55,11 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
 
         String token      = jwtService.generateToken(savedUser);  // ← delega
+        String refreshToken = createRefreshToken(savedUser);
         UserResponse resp = userMapper.toResponse(savedUser);
 
-        return new AuthResponse(token, jwtService.getExpiration(), resp);
+        return new AuthResponse(token, jwtService.getExpiration(),
+                refreshToken, resp);
     }
 
     @Override
@@ -68,8 +77,52 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token      = jwtService.generateToken(user);       // ← delega
+        String refreshToken = createRefreshToken(user);      // ← agregar
         UserResponse resp = userMapper.toResponse(user);
 
-        return new AuthResponse(token, jwtService.getExpiration(), resp);
+        return new AuthResponse(token, jwtService.getExpiration(), refreshToken, resp);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse refresh(RefreshTokenRequest request) {
+
+        // 1. Buscar el refresh token
+        RefreshToken refreshToken = refreshTokenRepository
+                .findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new RuntimeException("Refresh token inválido"));
+
+        // 2. Verificar que no esté revocado ni expirado
+        if (refreshToken.isRevoked()) {
+            throw new RuntimeException("Refresh token revocado");
+        }
+        if (refreshToken.isExpired()) {
+            throw new RuntimeException("Refresh token expirado");
+        }
+
+        // 3. Generar nuevo access token
+        User user = refreshToken.getUser();
+        String newToken = jwtService.generateToken(user);
+
+        // 4. Revocar el refresh token usado y crear uno nuevo
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+        String newRefreshToken = createRefreshToken(user);
+
+        UserResponse userResponse = userMapper.toResponse(user);
+
+        return new AuthResponse(newToken, jwtService.getExpiration(),
+                newRefreshToken, userResponse);
+    }
+
+    // ── Método privado ───────────────────────────────────────────
+    private String createRefreshToken(User user) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken(jwtService.generateRefreshToken());
+        refreshToken.setUser(user);
+        refreshToken.setExpiresAt(LocalDateTime.now()
+                .plusSeconds(jwtService.getRefreshExpiration() / 1000));
+
+        return refreshTokenRepository.save(refreshToken).getToken();
     }
 }

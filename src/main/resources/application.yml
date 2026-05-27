@@ -3,19 +3,19 @@ spring:
     name: virtual-store
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/tienda_virtual
-    username: kikecorpus
-    password:
+    url:      ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/tienda_virtual}
+    username: ${SPRING_DATASOURCE_USERNAME:kikecorpus}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${FORMAT_SQL:true}
 
   flyway:
     enabled: true
@@ -23,59 +23,37 @@ spring:
     baseline-on-migrate: true
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 springdoc:
-   # ── Documentación JSON ──────────────────────────────────────
   api-docs:
     enabled: true
-    path: /api-docs              # → http://localhost:8080/api-docs
-
-  # ── Swagger UI ──────────────────────────────────────────────
+    path: /api-docs
   swagger-ui:
     enabled: true
-    path: /swagger-ui.html       # → http://localhost:8080/swagger-ui.html
-    tags-sorter: alpha            # ordena los grupos alfabéticamente
-    operations-sorter: alpha      # ordena los endpoints alfabéticamente
-    display-request-duration: true # muestra el tiempo de cada request
-    try-it-out-enabled: true      # habilita "Try it out" por defecto
-    filter: true                  # habilita el buscador de endpoints
-
-  # ── Paginación ──────────────────────────────────────────────
-  pageable-as-query-param: true   # muestra page, size, sort como campos individuales
-
-  # ── Modelos ─────────────────────────────────────────────────
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+    filter: true
+  pageable-as-query-param: true
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
-  show-actuator: false            # oculta endpoints de actuator si los tienes
+  show-actuator: false
   model-and-view-allowed: false
 
-# ---------------------------------------------------------------
-# JWT
-# ---------------------------------------------------------------
 jwt:
-  # ✅ Mínimo 32 caracteres para HS256. En producción usa una variable
-  # de entorno: jwt.secret=${JWT_SECRET}
-  secret: "cambia-esto-por-un-secreto-seguro-32chars!"
+  secret:             ${JWT_SECRET:cambia-esto-por-un-secreto-seguro-32chars!}
+  expiration:         ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
-  # Expiración del token en milisegundos
-  # 86400000  =  24 horas
-  # 3600000   =   1 hora
-  expiration: 86400000
-  refresh-expiration: 604800000  # 7 días en milisegundos
-
-
-# ---------------------------------------------------------------
-# CORS
-# ---------------------------------------------------------------
 cors:
-  # En producción reemplaza con la URL real de tu frontend:
-  # allowed-origin=${FRONTEND_URL}
-  allowed-origin: "http://localhost:5173"
+  allowed-origin: ${FRONTEND_URL:http://localhost:5173}
 
 mercadopago:
-  access-token: APP_USR-8984698397446586-052117-c9ed8623c760bdca521756e6dd38cde0-2132120273
-  success-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/success
-  failure-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/failure
-  pending-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/pending
-  webhook-url: https://riverside-essay-blade.ngrok-free.dev/api/payments/webhook
+  access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
+  success-url:  ${MERCADOPAGO_SUCCESS_URL:http://localhost:8080/api/payments/success}
+  failure-url:  ${MERCADOPAGO_FAILURE_URL:http://localhost:8080/api/payments/failure}
+  pending-url:  ${MERCADOPAGO_PENDING_URL:http://localhost:8080/api/payments/pending}
+  webhook-url:  ${MERCADOPAGO_WEBHOOK_URL:http://localhost:8080/api/payments/webhook}

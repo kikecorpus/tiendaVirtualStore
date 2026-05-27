@@ -8,6 +8,7 @@ import com.tienda.virtualstore.repository.*;
 import com.tienda.virtualstore.service.CartService;
 import com.tienda.virtualstore.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j                    // ← agrega esta anotación
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -73,6 +75,12 @@ public class OrderServiceImpl implements OrderService {
             product.setStock(product.getStock() - cartItem.getQuantity());
             productRepository.save(product);
 
+            // ← Alerta de stock bajo
+            if (product.getStock() <= 5) {
+                log.warn("⚠️ Stock bajo — Producto: '{}' | Stock restante: {}",
+                        product.getName(), product.getStock());
+            }
+
             // 4c. Crear OrderItem como snapshot inmutable
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
@@ -89,10 +97,26 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        // 5. Calcular totales
+        // 5. Calcular descuento si hay cupón en el carrito
+        BigDecimal discount = BigDecimal.ZERO;
+
+        if (cart.getAppliedCoupon() != null) {
+            Coupon coupon = cart.getAppliedCoupon();
+            order.setCoupon(coupon);
+
+            discount = switch (coupon.getDiscountType()) {
+                case PERCENTAGE -> subtotal.multiply(
+                        coupon.getDiscountValue()
+                                .divide(BigDecimal.valueOf(100)));
+                case FIXED -> coupon.getDiscountValue()
+                        .min(subtotal);
+            };
+        }
+
+        // 6. Calcular totales con descuento
         order.setSubtotal(subtotal);
-        order.setDiscount(BigDecimal.ZERO);
-        order.setTotal(subtotal);
+        order.setDiscount(discount);
+        order.setTotal(subtotal.subtract(discount));
 
         // 6. Guardar pedido
         Order saved = orderRepository.save(order);

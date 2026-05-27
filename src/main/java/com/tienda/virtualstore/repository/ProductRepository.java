@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
@@ -30,4 +32,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Verificar nombre duplicado ignorando el producto actual (para update)
     boolean existsByNameIgnoreCaseAndCategoryIdAndIdNot(
             String name, Long categoryId, Long id);
+
+    // Contar productos con stock bajo
+    Long countByActiveTrueAndStockLessThanEqual(Integer threshold);
+
+    // Listar productos con stock bajo
+    List<Product> findByActiveTrueAndStockLessThanEqualOrderByStockAsc(
+            Integer threshold);
+
+    Long countByActiveTrue();
 }

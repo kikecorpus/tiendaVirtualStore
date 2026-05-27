@@ -21,4 +21,13 @@ public class CartResponse {
 
     @Schema(description = "Cantidad de items en el carrito", example = "2")
     private Integer itemCount;
+
+    @Schema(description = "Descuento aplicado por cupón", example = "200.00")
+    private BigDecimal discount;
+
+    @Schema(description = "Total con descuento aplicado", example = "799.99")
+    private BigDecimal totalWithDiscount;
+
+    @Schema(description = "Código del cupón aplicado", example = "VERANO20")
+    private String appliedCouponCode;
 }

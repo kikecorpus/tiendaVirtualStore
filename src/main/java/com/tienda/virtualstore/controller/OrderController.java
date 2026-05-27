@@ -99,10 +99,15 @@ public class OrderController {
 
     @GetMapping("/my-orders")
     @Operation(
-            summary     = "Ver mis pedidos",
-            description = "Retorna el historial de pedidos del usuario autenticado."
+            summary     = "Mi historial de compras",
+            description = "Retorna todos los pedidos del usuario autenticado ordenados por fecha."
     )
-    @ApiResponse(responseCode = "200", description = "Historial de pedidos")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Historial de pedidos",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "401", description = "No autenticado",
+                    content = @Content)
+    })
     public ResponseEntity<List<OrderResponse>> findMyOrders() {
         return ResponseEntity.ok(
                 orderService.findMyOrders(
@@ -126,4 +131,6 @@ public class OrderController {
 
         return ResponseEntity.ok(orderService.findAll(pageable));
     }
+
+
 }

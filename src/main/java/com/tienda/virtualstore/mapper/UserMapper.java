@@ -1,5 +1,6 @@
 package com.tienda.virtualstore.mapper;
 
+import com.tienda.virtualstore.dto.response.UserAdminResponse;
 import com.tienda.virtualstore.dto.response.UserResponse;
 import com.tienda.virtualstore.model.Role;
 import com.tienda.virtualstore.model.User;
@@ -22,4 +23,8 @@ public interface UserMapper {
                 .map(Role::getName)
                 .collect(Collectors.toSet());
     }
+
+    @Mapping(target = "roles",    source = "roles", qualifiedByName = "rolesToStrings")
+    @Mapping(target = "fullName", expression = "java(user.getFirstName() + ' ' + user.getLastName())")
+    UserAdminResponse toAdminResponse(User user);
 }

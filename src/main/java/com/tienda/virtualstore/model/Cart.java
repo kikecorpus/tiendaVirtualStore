@@ -34,6 +34,11 @@ public class Cart {
     @Schema(description = "Fecha de creación", example = "2024-01-15T10:30:00")
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "applied_coupon_id")
+    @Schema(description = "Cupón aplicado al carrito")
+    private Coupon appliedCoupon;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();

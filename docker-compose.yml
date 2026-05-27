@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: tienda_db
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-tienda_virtual}
+      POSTGRES_USER:     ${POSTGRES_USER:-tienda_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tienda_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tienda_user} -d ${POSTGRES_DB:-tienda_virtual}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: tienda_app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/${POSTGRES_DB:-tienda_virtual}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-tienda_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-tienda_pass}
+      JWT_SECRET:                 ${JWT_SECRET}
+      JWT_EXPIRATION:             ${JWT_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION:     ${JWT_REFRESH_EXPIRATION:-604800000}
+      MERCADOPAGO_ACCESS_TOKEN:   ${MERCADOPAGO_ACCESS_TOKEN}
+      MERCADOPAGO_SUCCESS_URL:    ${MERCADOPAGO_SUCCESS_URL}
+      MERCADOPAGO_FAILURE_URL:    ${MERCADOPAGO_FAILURE_URL}
+      MERCADOPAGO_PENDING_URL:    ${MERCADOPAGO_PENDING_URL}
+      MERCADOPAGO_WEBHOOK_URL:    ${MERCADOPAGO_WEBHOOK_URL}
+      FRONTEND_URL:               ${FRONTEND_URL:-http://localhost:5173}
+      SHOW_SQL:                   ${SHOW_SQL:-false}
+      FORMAT_SQL:                 ${FORMAT_SQL:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  postgres_data:

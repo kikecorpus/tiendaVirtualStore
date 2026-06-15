@@ -2,6 +2,9 @@ package com.tienda.virtualstore.service.impl;
 
 import com.tienda.virtualstore.dto.request.OrderStatusRequest;
 import com.tienda.virtualstore.dto.response.OrderResponse;
+import com.tienda.virtualstore.exception.BusinessException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
+import com.tienda.virtualstore.exception.UnauthorizedException;
 import com.tienda.virtualstore.mapper.OrderMapper;
 import com.tienda.virtualstore.model.*;
 import com.tienda.virtualstore.repository.*;
@@ -24,7 +27,6 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository    orderRepository;
     private final CartRepository     cartRepository;
-    private final CartItemRepository cartItemRepository;
     private final ProductRepository  productRepository;
     private final OrderMapper        orderMapper;
     private final CartService        cartService;
@@ -35,12 +37,12 @@ public class OrderServiceImpl implements OrderService {
 
         // 1. Obtener el carrito del usuario
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "No tienes un carrito activo"));
 
         // 2. Verificar que el carrito no esté vacío
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("El carrito está vacío");
+            throw new ResourceNotFoundException("El carrito está vacío");
         }
 
         // 3. Crear el pedido
@@ -56,17 +58,17 @@ public class OrderServiceImpl implements OrderService {
             // 4a. Verificar stock actualizado
             Product product = productRepository.findById(
                             cartItem.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new ResourceNotFoundException(
                             "Producto no encontrado"));
 
             if (!product.isActive()) {
-                throw new RuntimeException(
+                throw new BusinessException(
                         "El producto " + product.getName() +
                                 " ya no está disponible");
             }
 
             if (product.getStock() < cartItem.getQuantity()) {
-                throw new RuntimeException(
+                throw new BusinessException(
                         "Stock insuficiente para: " + product.getName() +
                                 ". Disponible: " + product.getStock());
             }
@@ -133,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 1. Buscar el pedido
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Pedido no encontrado con id: " + orderId));
 
         // 2. Validar transición de estado
@@ -155,12 +157,12 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public OrderResponse findById(Long orderId, Long userId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Pedido no encontrado con id: " + orderId));
 
         // Verificar que el pedido pertenece al usuario
         if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("No tienes acceso a este pedido");
+            throw new UnauthorizedException("No tienes acceso a este pedido");
         }
 
         return orderMapper.toResponse(order);
@@ -198,7 +200,7 @@ public class OrderServiceImpl implements OrderService {
         };
 
         if (!valid) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Transición de estado inválida: " + current + " → " + next);
         }
     }

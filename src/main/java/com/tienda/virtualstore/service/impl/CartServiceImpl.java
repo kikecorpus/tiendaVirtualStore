@@ -2,6 +2,9 @@ package com.tienda.virtualstore.service.impl;
 
 import com.tienda.virtualstore.dto.request.CartItemRequest;
 import com.tienda.virtualstore.dto.response.CartResponse;
+import com.tienda.virtualstore.exception.BusinessException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
+import com.tienda.virtualstore.exception.UnauthorizedException;
 import com.tienda.virtualstore.mapper.CartMapper;
 import com.tienda.virtualstore.model.Cart;
 import com.tienda.virtualstore.model.CartItem;
@@ -47,7 +50,7 @@ public class CartServiceImpl implements CartService {
 
         // 3. Verificar stock disponible
         if (product.getStock() < request.getQuantity()) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Stock insuficiente. Disponible: " + product.getStock());
         }
 
@@ -58,7 +61,7 @@ public class CartServiceImpl implements CartService {
                             // Actualizar cantidad
                             int newQty = existingItem.getQuantity() + request.getQuantity();
                             if (newQty > product.getStock()) {
-                                throw new RuntimeException(
+                                throw new BusinessException(
                                         "Stock insuficiente. Disponible: " + product.getStock());
                             }
                             existingItem.setQuantity(newQty);
@@ -88,17 +91,17 @@ public class CartServiceImpl implements CartService {
 
         // 2. Buscar el item
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Item no encontrado con id: " + itemId));
 
         // 3. Verificar que el item pertenece al carrito del usuario
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("El item no pertenece a tu carrito");
+            throw new UnauthorizedException("El item no pertenece a tu carrito");
         }
 
         // 4. Verificar stock
         if (item.getProduct().getStock() < request.getQuantity()) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Stock insuficiente. Disponible: " + item.getProduct().getStock());
         }
 
@@ -118,12 +121,12 @@ public class CartServiceImpl implements CartService {
 
         // 2. Buscar el item
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Item no encontrado con id: " + itemId));
 
         // 3. Verificar que pertenece al carrito del usuario
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("El item no pertenece a tu carrito");
+            throw new UnauthorizedException("El item no pertenece a tu carrito");
         }
 
         // 4. Eliminar — orphanRemoval lo borra de la DB

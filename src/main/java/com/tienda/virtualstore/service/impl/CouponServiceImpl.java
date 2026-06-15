@@ -4,6 +4,9 @@ import com.tienda.virtualstore.dto.request.ApplyCouponRequest;
 import com.tienda.virtualstore.dto.request.CouponRequest;
 import com.tienda.virtualstore.dto.response.CartResponse;
 import com.tienda.virtualstore.dto.response.CouponResponse;
+import com.tienda.virtualstore.exception.BusinessException;
+import com.tienda.virtualstore.exception.DuplicateResourceException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
 import com.tienda.virtualstore.mapper.CartMapper;
 import com.tienda.virtualstore.mapper.CouponMapper;
 import com.tienda.virtualstore.model.Coupon;
@@ -33,13 +36,13 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponse create(CouponRequest request) {
 
         if (couponRepository.existsByCodeIgnoreCase(request.getCode())) {
-            throw new RuntimeException("Ya existe un cupón con ese código");
+            throw new DuplicateResourceException("Ya existe un cupón con ese código");
         }
 
         // Validar porcentaje no mayor a 100
         if (request.getDiscountType() == Coupon.DiscountType.PERCENTAGE
                 && request.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new RuntimeException("El porcentaje no puede ser mayor a 100");
+            throw new BusinessException("El porcentaje no puede ser mayor a 100");
         }
 
         Coupon coupon = couponMapper.toEntity(request);
@@ -51,7 +54,7 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponse update(Long id, CouponRequest request) {
 
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Cupón no encontrado con id: " + id));
 
         couponMapper.updateEntity(request, coupon);
@@ -62,7 +65,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public void delete(Long id) {
         if (!couponRepository.existsById(id)) {
-            throw new RuntimeException("Cupón no encontrado con id: " + id);
+            throw new ResourceNotFoundException("Cupón no encontrado con id: " + id);
         }
         couponRepository.deleteById(id);
     }
@@ -82,27 +85,27 @@ public class CouponServiceImpl implements CouponService {
 
         // 1. Buscar el carrito
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new BusinessException(
                         "No tienes un carrito activo"));
 
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("El carrito está vacío");
+            throw new BusinessException("El carrito está vacío");
         }
 
         // 2. Buscar el cupón
         Coupon coupon = couponRepository
                 .findByCodeIgnoreCase(request.getCode())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Cupón no encontrado: " + request.getCode()));
 
         // 3. Validar cupón
         if (!coupon.isActive()) {
-            throw new RuntimeException("El cupón no está activo");
+            throw new BusinessException("El cupón no está activo");
         }
 
         if (coupon.getExpiresAt() != null
                 && LocalDateTime.now().isAfter(coupon.getExpiresAt())) {
-            throw new RuntimeException("El cupón ha vencido");
+            throw new BusinessException("El cupón ha vencido");
         }
 
         // 4. Guardar cupón en el carrito
@@ -117,7 +120,7 @@ public class CouponServiceImpl implements CouponService {
     public CartResponse removeCoupon(Long userId) {
 
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new BusinessException(
                         "No tienes un carrito activo"));
 
         cart.setAppliedCoupon(null);

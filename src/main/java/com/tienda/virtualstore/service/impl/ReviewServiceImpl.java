@@ -2,6 +2,9 @@ package com.tienda.virtualstore.service.impl;
 
 import com.tienda.virtualstore.dto.request.ReviewRequest;
 import com.tienda.virtualstore.dto.response.ReviewResponse;
+import com.tienda.virtualstore.exception.DuplicateResourceException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
+import com.tienda.virtualstore.exception.UnauthorizedException;
 import com.tienda.virtualstore.mapper.ReviewMapper;
 import com.tienda.virtualstore.model.Order;
 import com.tienda.virtualstore.model.Review;
@@ -29,14 +32,14 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 1. Verificar que el producto exista
         var product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Producto no encontrado con id: "
                                 + request.getProductId()));
 
         // 2. Verificar que el usuario no haya reseñado este producto
         if (reviewRepository.existsByUserIdAndProductId(
                 userId, request.getProductId())) {
-            throw new RuntimeException(
+            throw new DuplicateResourceException(
                     "Ya reseñaste este producto");
         }
 
@@ -51,7 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
                         .equals(request.getProductId()));
 
         if (!hasPurchased) {
-            throw new RuntimeException(
+            throw new UnauthorizedException(
                     "Solo puedes reseñar productos que hayas comprado y recibido");
         }
 
@@ -79,12 +82,12 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public void delete(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Reseña no encontrada con id: " + reviewId));
 
         // Solo el dueño puede eliminar su reseña
         if (!review.getUser().getId().equals(userId)) {
-            throw new RuntimeException(
+            throw new UnauthorizedException(
                     "No tienes permisos para eliminar esta reseña");
         }
 

@@ -5,6 +5,9 @@ import com.tienda.virtualstore.dto.request.RefreshTokenRequest;
 import com.tienda.virtualstore.dto.request.RegisterRequest;
 import com.tienda.virtualstore.dto.response.AuthResponse;
 import com.tienda.virtualstore.dto.response.UserResponse;
+import com.tienda.virtualstore.exception.DuplicateResourceException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
+import com.tienda.virtualstore.exception.UnauthorizedException;
 import com.tienda.virtualstore.mapper.UserMapper;
 import com.tienda.virtualstore.model.RefreshToken;
 import com.tienda.virtualstore.model.Role;
@@ -39,11 +42,11 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new DuplicateResourceException("El email ya está registrado");
         }
 
         Role clienteRole = roleRepository.findByName("ROLE_CLIENTE")
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado"));
 
         User user = new User();
         user.setEmail(request.getEmail());
@@ -66,14 +69,14 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
+                .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Credenciales inválidas");
+            throw new UnauthorizedException("Credenciales inválidas");
         }
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("La cuenta está desactivada");
+            throw new UnauthorizedException("La cuenta está desactivada");
         }
 
         String token      = jwtService.generateToken(user);       // ← delega
@@ -90,14 +93,14 @@ public class AuthServiceImpl implements AuthService {
         // 1. Buscar el refresh token
         RefreshToken refreshToken = refreshTokenRepository
                 .findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("Refresh token inválido"));
+                .orElseThrow(() -> new UnauthorizedException("Refresh token inválido"));
 
         // 2. Verificar que no esté revocado ni expirado
         if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token revocado");
+            throw new UnauthorizedException("Refresh token revocado");
         }
         if (refreshToken.isExpired()) {
-            throw new RuntimeException("Refresh token expirado");
+            throw new UnauthorizedException("Refresh token expirado");
         }
 
         // 3. Generar nuevo access token

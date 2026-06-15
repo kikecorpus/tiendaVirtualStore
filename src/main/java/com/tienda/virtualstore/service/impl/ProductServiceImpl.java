@@ -3,6 +3,8 @@ package com.tienda.virtualstore.service.impl;
 import com.tienda.virtualstore.dto.request.ProductRequest;
 import com.tienda.virtualstore.dto.response.ProductResponse;
 import com.tienda.virtualstore.dto.response.ProductSummaryResponse;
+import com.tienda.virtualstore.exception.DuplicateResourceException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
 import com.tienda.virtualstore.mapper.ProductMapper;
 import com.tienda.virtualstore.model.Category;
 import com.tienda.virtualstore.model.Product;
@@ -29,13 +31,13 @@ public class ProductServiceImpl implements ProductService {
 
         // 1. Buscar la categoría
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Categoría no encontrada con id: " + request.getCategoryId()));
 
         // 2. Verificar nombre único en esa categoría
         if (productRepository.existsByNameIgnoreCaseAndCategoryId(
                 request.getName(), request.getCategoryId())) {
-            throw new RuntimeException(
+            throw new DuplicateResourceException(
                     "Ya existe un producto con ese nombre en esta categoría");
         }
 
@@ -58,18 +60,18 @@ public class ProductServiceImpl implements ProductService {
 
         // 1. Buscar el producto existente
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Producto no encontrado con id: " + id));
 
         // 2. Buscar la nueva categoría
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Categoría no encontrada con id: " + request.getCategoryId()));
 
         // 3. Verificar nombre único ignorando el producto actual
         if (productRepository.existsByNameIgnoreCaseAndCategoryIdAndIdNot(
                 request.getName(), request.getCategoryId(), id)) {
-            throw new RuntimeException(
+            throw new DuplicateResourceException(
                     "Ya existe un producto con ese nombre en esta categoría");
         }
 
@@ -91,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findById(id)
                 .filter(Product::isActive)
                 .map(productMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Producto no encontrado con id: " + id));
     }
 
@@ -127,7 +129,7 @@ public class ProductServiceImpl implements ProductService {
     public void delete(Long id) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Producto no encontrado con id: " + id));
 
         // Soft delete — no elimina el registro, solo lo desactiva

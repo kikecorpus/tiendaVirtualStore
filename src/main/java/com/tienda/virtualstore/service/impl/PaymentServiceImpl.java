@@ -10,6 +10,9 @@ import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import com.tienda.virtualstore.dto.request.WebhookRequest;
 import com.tienda.virtualstore.dto.response.PaymentResponse;
+import com.tienda.virtualstore.exception.BusinessException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
+import com.tienda.virtualstore.exception.UnauthorizedException;
 import com.tienda.virtualstore.mapper.PaymentMapper;
 import com.tienda.virtualstore.model.Order;
 import com.tienda.virtualstore.repository.OrderRepository;
@@ -57,17 +60,17 @@ public class PaymentServiceImpl implements PaymentService {
 
         // 1. Buscar el pedido
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Pedido no encontrado con id: " + orderId));
 
         // 2. Verificar que el pedido pertenece al usuario
         if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("No tienes acceso a este pedido");
+            throw new UnauthorizedException("No tienes acceso a este pedido");
         }
 
         // 3. Verificar que el pedido está en estado PENDING
         if (order.getStatus() != Order.Status.PENDING) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "El pedido no está en estado PENDING. Estado actual: "
                             + order.getStatus());
         }
@@ -130,7 +133,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             log.error("Error al crear preferencia en MercadoPago: {}",
                     e.getMessage());
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Error al procesar el pago: " + e.getMessage());
         }
     }
@@ -162,13 +165,13 @@ public class PaymentServiceImpl implements PaymentService {
             // 4. Buscar el pedido por externalReference
             Long orderId = Long.parseLong(mpPayment.getExternalReference());
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new ResourceNotFoundException(
                             "Pedido no encontrado: " + orderId));
 
             // 5. Buscar el registro de pago
             com.tienda.virtualstore.model.Payment payment =
                     paymentRepository.findByOrderId(orderId)
-                            .orElseThrow(() -> new RuntimeException(
+                            .orElseThrow(() -> new ResourceNotFoundException(
                                     "Pago no encontrado para orden: " + orderId));
 
             // 6. Actualizar el pago según el estado de MP
@@ -202,7 +205,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         } catch (Exception e) {
             log.error("Error procesando webhook: {}", e.getMessage());
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Error procesando webhook: " + e.getMessage());
         }
     }

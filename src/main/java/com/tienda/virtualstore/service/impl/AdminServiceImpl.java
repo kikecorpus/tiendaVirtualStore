@@ -4,6 +4,7 @@ import com.tienda.virtualstore.dto.request.UserRoleRequest;
 import com.tienda.virtualstore.dto.response.DashboardResponse;
 import com.tienda.virtualstore.dto.response.ProductResponse;
 import com.tienda.virtualstore.dto.response.UserAdminResponse;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
 import com.tienda.virtualstore.mapper.OrderMapper;
 import com.tienda.virtualstore.mapper.ProductMapper;
 import com.tienda.virtualstore.mapper.UserMapper;
@@ -51,7 +52,7 @@ public class AdminServiceImpl implements AdminService {
     public UserAdminResponse findUserById(Long id) {
         return userRepository.findById(id)
                 .map(userMapper::toAdminResponse)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario no encontrado con id: " + id));
     }
 
@@ -61,14 +62,14 @@ public class AdminServiceImpl implements AdminService {
 
         // 1. Buscar el usuario
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario no encontrado con id: " + id));
 
         // 2. Buscar los roles solicitados
         Set<Role> newRoles = new HashSet<>();
         for (String roleName : request.getRoles()) {
             Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new ResourceNotFoundException(
                             "Rol no encontrado: " + roleName));
             newRoles.add(role);
         }
@@ -85,7 +86,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void toggleUserStatus(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario no encontrado con id: " + id));
 
         user.setEnabled(!user.isEnabled());

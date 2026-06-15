@@ -2,6 +2,8 @@ package com.tienda.virtualstore.service.impl;
 
 import com.tienda.virtualstore.dto.request.CategoryRequest;
 import com.tienda.virtualstore.dto.response.CategoryResponse;
+import com.tienda.virtualstore.exception.DuplicateResourceException;
+import com.tienda.virtualstore.exception.ResourceNotFoundException;
 import com.tienda.virtualstore.mapper.CategoryMapper;
 import com.tienda.virtualstore.model.Category;
 import com.tienda.virtualstore.repository.CategoryRepository;
@@ -25,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 1. Verificar que no exista una categoría con el mismo nombre
         if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new RuntimeException("Ya existe una categoría con ese nombre");
+            throw new DuplicateResourceException("Ya existe una categoría con ese nombre");
         }
 
         // 2. Convertir request a entidad
@@ -44,12 +46,12 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 1. Buscar la categoría existente
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Categoría no encontrada con id: " + id));
 
         // 2. Verificar nombre único (ignorando la misma categoría)
         if (categoryRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
-            throw new RuntimeException("Ya existe una categoría con ese nombre");
+            throw new DuplicateResourceException("Ya existe una categoría con ese nombre");
         }
 
         // 3. Actualizar campos con MapStruct
@@ -67,7 +69,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse findById(Long id) {
         return categoryRepository.findById(id)
                 .map(categoryMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Categoría no encontrada con id: " + id));
     }
 
@@ -86,7 +88,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 1. Verificar que exista
         if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Categoría no encontrada con id: " + id);
+            throw new ResourceNotFoundException("Categoría no encontrada con id: " + id);
         }
 
         // 2. Eliminar

@@ -57,3 +57,4 @@ mercadopago:
   failure-url:  ${MERCADOPAGO_FAILURE_URL:http://localhost:8080/api/payments/failure}
   pending-url:  ${MERCADOPAGO_PENDING_URL:http://localhost:8080/api/payments/pending}
   webhook-url:  ${MERCADOPAGO_WEBHOOK_URL:http://localhost:8080/api/payments/webhook}
+  webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
